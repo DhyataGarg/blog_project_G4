@@ -4,7 +4,7 @@ const { User } = require("../auth/models");
 const blogSchema = new mongoose.Schema({
     title: String,
     description: String,
-    user: {
+    user_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: User
     }
