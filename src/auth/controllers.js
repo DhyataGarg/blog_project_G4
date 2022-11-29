@@ -1,5 +1,6 @@
 const { User } = require("./models");
 const jwt = require("jsonwebtoken");
+const Key = "yugffujnbvcxdrzaerse56e464657rdxfgyuihguhdrxtrdty";
 
 const register = async (req, res) => {
     const { name, email, username, password } = req.body;
@@ -28,7 +29,7 @@ const register = async (req, res) => {
 }
 
 const loginMiddleware = async (req, res, next) => {
-    const { username, password } = request.body;
+    const { username, password } = req.body;
     if (!username || !password) {
         return response.json({
             status: "Error",
@@ -45,13 +46,13 @@ const loginMiddleware = async (req, res, next) => {
     }
 
     if (!user.isAuthenticated(password)) {
-        return response.json({
+        return res.json({
             status: "Error",
             msg: "You entered wrong password.",
         });
     }
 
-    var token = jwt.sign({ _id: user._id }, user.salt);
+    var token = jwt.sign({ _id: user._id }, Key);
     req.body.token = token;
     req.body.user = user;
     user.ency_password = undefined;
@@ -70,7 +71,7 @@ const isAuthenticate = async (request, response, next) => {
     }
     var user;
     try {
-        user = jwt.verify(token, user.salt);
+        user = jwt.verify(token, Key);
     } catch {
         return response.json({ status: "Un-Authenticated" });
     }
@@ -78,7 +79,6 @@ const isAuthenticate = async (request, response, next) => {
     user = await User.findById(user._id);
 
     next();
-    // return response.json({ status: "Done", user });
 };
 
 
@@ -100,4 +100,4 @@ const reset = async (request, response, next) => {
 
 }
 
-module.exports = { register, loginMiddleware, login, isAuthenticate, reset };
+module.exports = { register, loginMiddleware, login, reset, Key };
