@@ -1,4 +1,4 @@
-const { register, login, isAuthenticate, reset, loginMiddleware } = require("./controllers");
+const { register, login, reset, loginMiddleware } = require("./controllers");
 
 const express = require("express");
 const authRouter = express.Router();
