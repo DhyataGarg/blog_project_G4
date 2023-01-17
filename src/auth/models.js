@@ -4,17 +4,17 @@ const CryptoJS = require('crypto-js'); // to encrypt and decrypt passwords
 
 const userSchema = new mongoose.Schema(
     {
-        userame: {
+        username: {
             type: String,
             trim: true,
-            unique: true,
+            // unique: true,
         },
         name: String,
         email: String,
         ency_password: String,
         salt: String,
     },
-    { timestamps: true }
+    { timestamps: true, toJSON: { virtuals: true } }
 )
 
 userSchema.virtual("password").set(function (password) {
@@ -24,17 +24,17 @@ userSchema.virtual("password").set(function (password) {
 
 userSchema.methods = {
     isAuthenticated: function (plainPassword) {
-        return this.encry_passwrod === this.securePassword(plainPassword);
+        return this.ency_password == this.securePassword(plainPassword);
     },
     securePassword: function (plainPassword) {
         if (!plainPassword) return "";
-        var ciphertext = CryptoJS.SHA256.encrypt(plainPassword, this.salt).toString();
+        var ciphertext = CryptoJS.SHA256(plainPassword, this.salt).toString();
         return ciphertext;
     },
 };
 
 
 // Use this name for ref in another schema
-//
+
 const User = mongoose.model('User', userSchema);
 module.exports = { User };

@@ -3,6 +3,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const authRouter = require("./src/auth/router");
+const { register } = require("./src/auth/controllers");
 
 // ToDo: Database Connection
 mongoose.connect("mongodb://localhost:27017/blog");
@@ -18,7 +19,8 @@ const app = server();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use("./auth", authRouter);
+app.use("/auth", authRouter);
+// app.post("/", register);
 
 app.listen(4000, () => {
     console.log("Sever Started on port 4000");

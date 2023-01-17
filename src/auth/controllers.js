@@ -2,14 +2,14 @@ const { User } = require("./models");
 const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
-    const { name, username, password } = req.body;
+    const { name, email, username, password } = req.body;
     if (!username || !password) {
-        return res.json({ status: "Error", msg: "Username and password must be provided!" })
+        return res.json({ status: "Error", msg: "Username, email and password must be provided!" })
     }
 
     // validate username
 
-    var isUserExist = await User.findOne({ username: username });
+    var isUserExist = await User.findOne({ $or: [{ username: username }, { name: name }, { email: email }] });
     if (isUserExist) {
         return res.json({
             status: "Error",
@@ -18,7 +18,7 @@ const register = async (req, res) => {
     }
 
     var newUser = await User.create(req.body);
-    newUser.encry_passwrod = undefined;
+    newUser.ency_password = undefined;
     newUser.salt = undefined;
 
     return res.json({
@@ -27,7 +27,7 @@ const register = async (req, res) => {
     });
 }
 
-const login = async (request, response) => {
+const loginMiddleware = async (req, res, next) => {
     const { username, password } = request.body;
     if (!username || !password) {
         return response.json({
@@ -44,16 +44,23 @@ const login = async (request, response) => {
         });
     }
 
-    if (!user.isAuthenticatd(password)) {
+    if (!user.isAuthenticated(password)) {
         return response.json({
             status: "Error",
             msg: "You entered wrong password.",
         });
     }
 
-    var token = jwt.sign({ _id: user._id }, SECREAT_KEY);
+    var token = jwt.sign({ _id: user._id }, user.salt);
+    req.body.token = token;
+    req.body.user = user;
+    user.ency_password = undefined;
+    user.salt = undefined;
+    next();
+}
 
-    return response.json({ status: "Done", user, token });
+const login = async (request, response) => {
+    return response.json({ status: "Done", data: request.body });
 };
 
 const isAuthenticate = async (request, response, next) => {
@@ -63,7 +70,7 @@ const isAuthenticate = async (request, response, next) => {
     }
     var user;
     try {
-        user = jwt.verify(token, SECREAT_KEY);
+        user = jwt.verify(token, user.salt);
     } catch {
         return response.json({ status: "Un-Authenticated" });
     }
@@ -76,7 +83,21 @@ const isAuthenticate = async (request, response, next) => {
 
 
 const reset = async (request, response, next) => {
-    return response.json({ status: "Done" });
+    const { username, new_password } = request.body;
+
+    var user = await User.findOne({ username: username });
+    if (!user) {
+        return response.json({
+            status: "Error",
+            msg: "Username not found",
+        });
+    }
+
+    user.password = new_password;
+    user.save();
+
+    return response.json({ status: "Done", user });
 
 }
-module.exports = { register, login, isAuthenticate, reset };
+
+module.exports = { register, loginMiddleware, login, isAuthenticate, reset };
